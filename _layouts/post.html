@@ -28,7 +28,7 @@ layout: default
 
 
   <!-- Share -->
-  {% if page.share != false %}
+  {% if site.share != false and page.share != false %}
   <div class="post-share">
     <hr>
     {% include share.html %}
@@ -36,10 +36,19 @@ layout: default
   </div>
   {% endif %}
 
-  <!-- Disqus -->
-  {% if page.comments != false and site.disqus.id %}
-  <section id="disqus_thread"></section>
-  {% include disqus.html %}
+  <!-- duoshuo -->
+  {% if page.comments != false and site.duoshuo.id %}
+  <section id="disqus_thread">
+    <!-- 多说评论框 start -->
+    <div class="ds-thread" data-thread-key="{{page.id}}" data-title="{{page.title}}" data-url="{{site.url}}{{page.url}}"></div>
+    <!-- 多说评论框 end -->
+  </section>
+  {% include duoshuo.html %}
   {% endif %}
+  <!--&lt;!&ndash; Disqus &ndash;&gt;-->
+  <!--{% if page.comments != false and site.disqus.id %}-->
+  <!--<section id="disqus_thread"></section>-->
+  <!--{% include disqus.html %}-->
+  <!--{% endif %}-->
 
 </div>

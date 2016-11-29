@@ -17,17 +17,24 @@ author:
   #tumblr:           your-id
   email:            bt_liuzhi@163.com
 
+share:              false
+
 # Google-analytics
 google-analytics:
   id:               ""
 
 # Disqus
 disqus:
-  id:               "drawf"
+#  id:               "drawf"
+
+# duoshuo
+duoshuo:
+  id:               "erwa"
 
 # URL
 #url:                "https://AWEEKJ.github.io" # the base hostname & protocol for your site
-url:                "http://51erwa.com" #"http://localhost:4000" # use this url when develop
+#url:                "http://51erwa.com"
+url:                "http://localhost:4000" # use this url when develop
 baseurl:            "" # the subpath of your site, e.g. /blog
 
 
