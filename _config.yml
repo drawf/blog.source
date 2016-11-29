@@ -53,14 +53,14 @@ kramdown:
 
 # Navigation
 nav:
-  - name:           "About"
+  - name:           "about"
     url:            "/about"
-  - name:           "Archive"
+  - name:           "archive"
     url:            "/archive"
-  - name:           "Tags"
+  - name:           "tags"
     url:            "/tags"
-  - name:           "Github"
-    url:            "https://github.com/drawf"
+  - name:           "wanzi.tv"
+    url:            "http://wanzi.tv"
 
 
 
