@@ -9,6 +9,7 @@ comments: true
 
 # RESTful
 RESTful，是目前最为流行的一种互联网软件架构。因为它结构清晰、符合标准、易于理解、扩展方便，所以正得到越来越多网站的采用。本小节我们将来学习它到底是一种什么样的架构？以及在Go里面如何来实现它。
+
 ## 什么是REST
 REST(REpresentational State Transfer)这个概念，**译为“表现层状态转化”**，首次出现是在 2000年Roy Thomas Fielding（他是HTTP规范的主要编写者之一）的博士论文中，它指的是一组架构约束条件和原则。满足这些约束条件和原则的应用程序或设计就是RESTful的。
 
