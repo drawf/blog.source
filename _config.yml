@@ -4,14 +4,15 @@
 
 # Site
 title: erwa'blog
-subtitle: 很高兴你能来到这里！
+subtitle: 非常高兴你能来到这里！
 description: 测试一下描述
 author: erwa
 language: zh-CN
-timezone:
+timezone: Asia/Shanghai
 
 # URL
 ## If your site is put in a subdirectory, set url as 'http://yoursite.com/child' and root as '/child/'
+#url: http://127.0.0.1:4000
 url: http://51erwa.com
 root: /
 permalink: :year/:month/:day/:title/
@@ -40,7 +41,7 @@ future: true
 highlight:
   enable: true
   line_number: true
-  auto_detect: false
+  auto_detect: true
   tab_replace:
 
 # Category & Tag
