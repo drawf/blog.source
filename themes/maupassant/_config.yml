@@ -35,8 +35,8 @@ widgets: ## Six widgets in sidebar provided: search, category, tag, recent_posts
   - category
   - tag
   - recent_posts
+  - recent_comments
   - links
-#  - recent_comments
 
 links:
   - title: 丸子影视
