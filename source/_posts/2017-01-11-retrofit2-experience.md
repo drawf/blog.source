@@ -13,7 +13,7 @@ description: 官方标语：一个用于Android和Java平台的类型安全的�
 
 [demo.retrofit传送门](https://github.com/drawf/demo.retrofit)
 
-![](https://github.com/drawf/demo.retrofit/blob/master/images/screenshot_1.png?raw=true)
+![](https://github.com/drawf/demo.retrofit/blob/master/images/screenshot_1.png?raw=true =200x)
 
 ### Retrofit2.0
 Slogan:A type-safe HTTP client for Android and Java.
