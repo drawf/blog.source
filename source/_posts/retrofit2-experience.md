@@ -89,6 +89,16 @@ Google Guava库是一个非常优秀的包含很多Java工具类集的库，广�
 
    mCall.execute();//同步请求
    mCall.enqueue(Callback<T> callback);//异步请求
+
+   //请求返回的Response对象
+   response.code();//HTTP status code.
+   response.isSuccessful();//Returns true if code() is in the range [200..300).
+   response.message();//HTTP status message or null if unknown.
+   response.headers();//HTTP headers.
+
+   response.raw();//The raw response from the HTTP client. 打印发现该方法返回数据不全
+   response.body();//The deserialized response body of a successful response.它就是你想要的数据
+   response.errorBody();//The raw response body of an unsuccessful response.
    ```
 
 #### API的注解使用
@@ -109,7 +119,7 @@ Retrofit注解共22个，分三类介绍
 
 2. 参数类
 
-    <table><thead><tr class="thead-first-child"><th align="center"> 注解 </th><th align="center"> 说明 </th></tr></thead><tbody><tr class="tbody-first-child"><td align="center"> Query、QueryMap </td><td align="center"> 用于GET的请求参数 </td></tr><tr class="tbody-even-child"><td align="center"> Url </td><td align="center"> 用全路径复写BaseUrl </td></tr><tr class="tbody-odd-child"><td align="center"> Path </td><td align="center"> 用于替换和动态更新URL的占位符 </td></tr><tr class="tbody-even-child"><td align="center"> Header、Headers </td><td align="center"> 用于添加请求头 </td></tr><tr class="tbody-odd-child"><td align="center"> Body </td><td align="center"> 用于POST、PUT、PATCH请求体 </td></tr><tr class="tbody-even-child"><td align="center"> Field、FieldMap </td><td align="center"> 用于form表单形式的键值对参数 </td></tr><tr class="tbody-odd-child"><td align="center"> Part、PartMap </td><td align="center"> 用于POST文件上传 </td></tr></tbody></table>
+    <table><thead><tr class="thead-first-child"><th align="center"> 注解 </th><th align="center"> 说明 </th></tr></thead><tbody><tr class="tbody-first-child"><td align="center"> Query、QueryMap </td><td align="center"> 用于GET的请求参数 </td></tr><tr class="tbody-even-child"><td align="center"> Url </td><td align="center"> 用全路径复写BaseUrl </td></tr><tr class="tbody-odd-child"><td align="center"> Path </td><td align="center"> 用于替换和动态更新URL的占位符 </td></tr><tr class="tbody-even-child"><td align="center"> Header、HeaderMap、Headers </td><td align="center"> 用于添加请求头 </td></tr><tr class="tbody-odd-child"><td align="center"> Body </td><td align="center"> 用于POST、PUT、PATCH请求体 </td></tr><tr class="tbody-even-child"><td align="center"> Field、FieldMap </td><td align="center"> 用于form表单形式的键值对参数 </td></tr><tr class="tbody-odd-child"><td align="center"> Part、PartMap </td><td align="center"> 用于POST文件上传 </td></tr></tbody></table>
 
     ```Java
     /*@Query，@QueryMap 查询参数，用于GET查询，两者都可以约定是否需要encode，默认false*/
@@ -125,7 +135,7 @@ Retrofit注解共22个，分三类介绍
     @GET("{type}")
     Call<JsonObject> testPath(@Path("type") String type, @Query("start") int start, @Query("count") int count);
 
-    /*@Header，@Headers 不能被互相覆盖*/
+    /*@Header，@HeaderMap，@Headers 不能被互相覆盖*/
     @Headers({
             "token:test override",
             "User-Agent: Wanzi-Retrofit-Sample-App"
@@ -177,9 +187,49 @@ Retrofit注解共22个，分三类介绍
     Call<ResponseBody> testStreaming(@Url String url);
     ```
 
+#### 指定返回类型Map、List
+GsonConverterFactory支持返回类型Map、List，实验发现不支持String。
+
+```Java
+@GET("top250")
+Call<Map<String, Object>> testMap(@Query("start") int start, @Query("count") int count);
+
+@GET
+Call<List<Map<String, Object>>> testList(@Url String url, @Query("start") int start, @Query("count") int count);
+```
+
+#### 自定义Converter、CallAdapter
+
+##### 自定义StringConverter
+1. `new Retrofit.Builder().addConverterFactory(Converter.Factory factory)`，该方法接收一个Factory，该工厂向Retrofit提供相应的Converter，所以第一步写一个工厂类。具体写的时候多参考`GsonConverterFactory`源码，有助于理解。
+
+   抽象类`Converter.Factory`中有三个可以覆写的方法：
+
+    ```Java
+    /*创建一个将ResponseBody响应体转换为自定义类型的Converter，不能处理时应返回null*/
+    public Converter<ResponseBody, ?> responseBodyConverter(Type type, Annotation[] annotations,
+        Retrofit retrofit) {
+      return null;
+    }
+
+    /*创建一个将自定义类型转换为RequestBody请求体的Converter，不能处理时应返回null*/
+    public Converter<?, RequestBody> requestBodyConverter(Type type,
+        Annotation[] parameterAnnotations, Annotation[] methodAnnotations, Retrofit retrofit) {
+      return null;
+    }
+
+    /*这里用于对Field、FieldMap、Header、HeaderMap、Path、Query、QueryMap注解的处理，Retrofit默认调用的toString方法*/
+    public Converter<?, String> stringConverter(Type type, Annotation[] annotations,
+        Retrofit retrofit) {
+      return null;
+    }
+    ```
+
+2. 首先看最底层的泛型接口`public interface Converter<F, T>`，它提供了一个接口`T convert(F value) throws IOException;`实现这个接口，可以将F泛型转化为T泛型。
 
 
 
+##### 自定义CustomCallAdapter
 
 
 
