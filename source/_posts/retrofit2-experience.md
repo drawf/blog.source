@@ -42,13 +42,13 @@ Google Guava库是一个非常优秀的包含很多Java工具类集的库，广�
 
     ```Java
     Retrofit retrofit = new Retrofit.Builder()
-                    //用于请求的HTTP client，设置OkHttpClient，有默认值。该方法是引用传递，对client的修改会影响后续请求。
-                    .client(client)
-                    .baseUrl(MovieService.BASE_URL)//设置baseUrl
-                    .addConverterFactory(GsonConverterFactory.create())
-                    //是否在调用create(Class)时检测接口定义是否正确，而不是在调用方法才检测，在开发、测试时使用。
-                    .validateEagerly(BuildConfig.DEBUG)
-                    .build();
+             //用于请求的HTTP client，设置OkHttpClient，有默认值。该方法是引用传递，对client的修改会影响后续请求。
+             .client(client)
+             .baseUrl(MovieService.BASE_URL)//设置baseUrl
+             .addConverterFactory(GsonConverterFactory.create())
+             //是否在调用create(Class)时检测接口定义是否正确，而不是在调用方法才检测，在开发、测试时使用。
+             .validateEagerly(BuildConfig.DEBUG)
+             .build();
     ```
 
 2. 以interface的方式定义API
@@ -201,9 +201,12 @@ Call<List<Map<String, Object>>> testList(@Url String url, @Query("start") int st
 #### 自定义Converter、CallAdapter
 
 ##### 自定义StringConverter
-1. `new Retrofit.Builder().addConverterFactory(Converter.Factory factory)`，该方法接收一个Factory，该工厂向Retrofit提供相应的Converter，所以第一步写一个工厂类。具体写的时候多参考`GsonConverterFactory`源码，有助于理解。
+`Converter`的目的是将`Call<ResponseBody>`转换为`Call<JsonObject>`、`Call<Map<String, Object>>`、`Call<String>`等等。
 
-   抽象类`Converter.Factory`中有三个可以覆写的方法：
+1. `new Retrofit.Builder().addConverterFactory(Converter.Factory factory)`，该方法接收一个Factory，该工厂向Retrofit提供相应的Converter，
+所以第一步写一个工厂类。具体写的时候多参考`GsonConverterFactory`源码，有助于理解。
+
+    抽象类`Converter.Factory`中有三个可以覆写的方法：
 
     ```Java
     /*创建一个将ResponseBody响应体转换为自定义类型的Converter，不能处理时应返回null*/
@@ -225,13 +228,192 @@ Call<List<Map<String, Object>>> testList(@Url String url, @Query("start") int st
     }
     ```
 
-2. 首先看最底层的泛型接口`public interface Converter<F, T>`，它提供了一个接口`T convert(F value) throws IOException;`实现这个接口，可以将F泛型转化为T泛型。
+    因为我们只要将请求结果`ResponseBody`转换为`String`，所以只覆写`responseBodyConverter`。
 
+    ```Java
+    public class StringConverterFactory extends Converter.Factory {
 
+        public static StringConverterFactory create() {
+            return new StringConverterFactory();
+        }
+
+        @Override
+        public Converter<ResponseBody, ?> responseBodyConverter(Type type, Annotation[] annotations, Retrofit retrofit) {
+            if (type == String.class) {//判断是否是要处理的类型
+                return new StringResponseBodyConverter();//这里创建具体的Converter
+            }
+            return null;//不能处理就返回null
+        }
+
+    }
+    ```
+
+2. `public interface Converter<F, T>`，该泛型接口提供了一个接口`T convert(F value) throws IOException;`实现这个接口，可以将F泛型转化为T泛型。
+
+    我们想从`Call<ResponseBody>`转换为`Call<String>`，所以`F`、`T`分别对应`ResponseBody`、`String`。
+
+    ```Java
+    public class StringResponseBodyConverter implements Converter<ResponseBody, String> {
+
+    //    T convert(F value) throws IOException;
+    //    实现从 F(from) 到 T(to) 的转换
+
+        @Override
+        public String convert(ResponseBody value) throws IOException {
+            try {
+                return value.string();
+            } finally {
+                value.close();
+            }
+        }
+
+    }
+    ```
+
+3. 至此就可以愉快的使用自定义的`Converter`了.
+
+    ```Java
+    //返回类型定义为String
+    @GET("top250")
+    Call<String> testStringConverter(@Query("start") int start, @Query("count") int count);
+
+    //构建Retrofit时加上我们的StringConverterFactory
+    .addConverterFactory(StringConverterFactory.create())//两种Converter都支持的类型优先使用第一个
+    ```
 
 ##### 自定义CustomCallAdapter
+`CallAdapter`的目的是将`Call<?>`转换为RxJava的`Observable<?>`、Guava的`ListenableFuture<?>`、自定义的`CustomCall<?>`，
+这里就是体验下自定义CallAdapter，工作中用官方提供的就能满足需求。
 
+1. `new Retrofit.Builder().addCallAdapterFactory(CallAdapter.Factory factory)`，该方法接收一个Factory，该工厂向Retrofit提供CallAdapter，
+所以第一步写一个工厂类。具体写的时候多参考`RxJavaCallAdapterFactory`、`GuavaCallAdapterFactory`源码，有助于理解。
 
+    抽象类`CallAdapter.Factory`中有一个抽象方法，两个工具方法。
 
+    ```Java
+    /*创建一个将Call<?>转换为自定义类型的CallAdapter，根据returnType判断是否能处理，不能处理时应返回null，此时的returnType为Call<?>类型*/
+    public abstract CallAdapter<?> get(Type returnType, Annotation[] annotations, Retrofit retrofit);
 
+    /*用于获取泛型的上边界参数，如Call<?>中的?、Call<JsonObject>中的JsonObject*/
+    protected static Type getParameterUpperBound(int index, ParameterizedType type) {
+      return Utils.getParameterUpperBound(index, type);
+    }
 
+    /*用于获取泛型的原始类型，如Call<?>中的Call、Observable<?>中的Observable、CustomCall<?>中的CustomCall*/
+    protected static Class<?> getRawType(Type type) {
+      return Utils.getRawType(type);
+    }
+    ```
+
+    所以可以写出工厂类。
+
+    ```Java
+    public class CustomCallAdapterFactory extends CallAdapter.Factory {
+
+        public static CustomCallAdapterFactory create() {
+            return new CustomCallAdapterFactory();
+        }
+
+        /*在本例中*/
+        /*returnType为CustomCall<R>*/
+        /*getRawType(returnType)为CustomCall.class*/
+        /*responseType为R的具体类型*/
+        @Override
+        public CallAdapter<?> get(Type returnType, Annotation[] annotations, Retrofit retrofit) {
+            if (getRawType(returnType) != CustomCall.class) {//检查返回的原始类型是否为CustomCall
+                return null;
+            }
+
+            if (!(returnType instanceof ParameterizedType)) {
+                throw new IllegalArgumentException(
+                        "Call return type must be parameterized as Call<Foo> or Call<? extends Foo>");
+            }
+            Type responseType = getParameterUpperBound(0, (ParameterizedType) returnType);
+            return new CustomCallAdapter(responseType);
+        }
+    }
+    ```
+
+2. `public interface CallAdapter<T>`，该泛型接口中提供了两个接口。
+
+    ```Java
+    /*用于Converter的返回类型，如CustomCall<String>中的String*/
+    Type responseType();
+
+    /*将Call<?>类型转换为T类型，如CustomCall<?>*/
+    <R> T adapt(Call<R> call);
+    ```
+
+    所以可以写出具体的`CustomCallAdapter`类。
+
+    ```Java
+    /*自定义的Call适配器，作用为将返回的Call<R> 转化为 CustomCall<R>*/
+    static class CustomCallAdapter implements CallAdapter<CustomCall<?>> {
+
+        private Type responseType;
+
+        public CustomCallAdapter(Type responseType) {
+            this.responseType = responseType;
+        }
+
+        @Override
+        public Type responseType() {
+            return this.responseType;
+        }
+
+        @Override
+        public <R> CustomCall<R> adapt(Call<R> call) {
+            return new CustomCall(call);
+        }
+    }
+    ```
+
+3. 最后需要定义出`CustomCall<R>`，这里的`CustomCall`是对`Call`的一个简单包装，提供一个`getResult()`方法获取请求响应体。
+
+    ```Java
+    public static class CustomCall<R> {
+        private Call<R> call;
+
+        public CustomCall(Call<R> call) {
+            this.call = call;
+        }
+
+        /**
+         * 同步请求返回结果
+         *
+         * @return
+         * @throws IOException
+         */
+        public R getResult() throws IOException {
+            return this.call.execute().body();
+        }
+    }
+    ```
+
+4. 大功告成，上手试试吧，`String`可以成`JsonObject`等等。
+
+    ```Java
+    /*返回类型定义为CustomCall*/
+    @GET("top250")
+    CustomCallAdapterFactory.CustomCall<String> testCustomCallAdapter(@Query("start") int start, @Query("count") int count);
+
+    //构建Retrofit时加上我们的StringConverterFactory
+    .addCallAdapterFactory(CustomCallAdapterFactory.create())//设置自定义请求适配器
+
+    //使用
+    private void customCallAdapter() {
+        final CustomCallAdapterFactory.CustomCall<String> customCall = mMovieService.testCustomCallAdapter(0, 2);
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    String result = customCall.getResult();
+                    LogUtils.i("CustomCallAdapter：" + result);
+                } catch (IOException e) {
+                    LogUtils.e(e);
+                }
+            }
+        }).start();
+    }
+    ```
