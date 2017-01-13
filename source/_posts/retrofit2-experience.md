@@ -9,7 +9,7 @@ description: 官方标语：一个用于Android和Java平台的类型安全的�
 ---
 
 ### 放在前边
-> 注：本篇是对Retrofit2.0的全面体验，并未涉及RxJava。
+> 注：本篇是对Retrofit2.0的全面体验，并未涉及RxJava、OkHttp。
 
 [demo.retrofit传送门](https://github.com/drawf/demo.retrofit)
 
@@ -102,7 +102,7 @@ Google Guava库是一个非常优秀的包含很多Java工具类集的库，广�
    ```
 
 #### API的注解使用
-Retrofit注解共22个，分三类介绍
+Retrofit注解共23个，分三类介绍
 
 1. HTTP请求方法
 
@@ -119,7 +119,7 @@ Retrofit注解共22个，分三类介绍
 
 2. 参数类
 
-    <table><thead><tr class="thead-first-child"><th align="center"> 注解 </th><th align="center"> 说明 </th></tr></thead><tbody><tr class="tbody-first-child"><td align="center"> Query、QueryMap </td><td align="center"> 用于GET的请求参数 </td></tr><tr class="tbody-even-child"><td align="center"> Url </td><td align="center"> 用全路径复写BaseUrl </td></tr><tr class="tbody-odd-child"><td align="center"> Path </td><td align="center"> 用于替换和动态更新URL的占位符 </td></tr><tr class="tbody-even-child"><td align="center"> Header、HeaderMap、Headers </td><td align="center"> 用于添加请求头 </td></tr><tr class="tbody-odd-child"><td align="center"> Body </td><td align="center"> 用于POST、PUT、PATCH请求体 </td></tr><tr class="tbody-even-child"><td align="center"> Field、FieldMap </td><td align="center"> 用于form表单形式的键值对参数 </td></tr><tr class="tbody-odd-child"><td align="center"> Part、PartMap </td><td align="center"> 用于POST文件上传 </td></tr></tbody></table>
+    <table><thead><tr class="thead-first-child"><th align="center"> 注解 </th><th align="center"> 说明 </th></tr></thead><tbody><tr class="tbody-first-child"><td align="center"> Query、QueryMap </td><td align="center"> 用于GET的请求参数 </td></tr><tr class="tbody-even-child"><td align="center"> Url </td><td align="center"> 用于全路径复写BaseUrl </td></tr><tr class="tbody-odd-child"><td align="center"> Path </td><td align="center"> 用于替换和动态更新URL的占位符 </td></tr><tr class="tbody-even-child"><td align="center"> Header、HeaderMap、Headers </td><td align="center"> 用于添加请求头 </td></tr><tr class="tbody-odd-child"><td align="center"> Body </td><td align="center"> 用于POST、PUT、PATCH请求体 </td></tr><tr class="tbody-even-child"><td align="center"> Field、FieldMap </td><td align="center"> 用于form表单形式的键值对参数 </td></tr><tr class="tbody-odd-child"><td align="center"> Part、PartMap </td><td align="center"> 用于POST文件上传 </td></tr></tbody></table>
 
     ```Java
     /*@Query，@QueryMap 查询参数，用于GET查询，两者都可以约定是否需要encode，默认false*/
@@ -390,7 +390,7 @@ Call<List<Map<String, Object>>> testList(@Url String url, @Query("start") int st
     }
     ```
 
-4. 大功告成，上手试试吧，`String`可以成`JsonObject`等等。
+4. 大功告成，上手试试吧，`String`可以换成`JsonObject`等等。
 
     ```Java
     /*返回类型定义为CustomCall*/
@@ -417,3 +417,6 @@ Call<List<Map<String, Object>>> testList(@Url String url, @Query("start") int st
         }).start();
     }
     ```
+
+### 放在后边
+关于Retrofit2.0的姿势就写到这里了，如有疑问和建议欢迎留言。
