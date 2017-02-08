@@ -1,21 +1,23 @@
 ---
 layout: post
-title: "全面体验Retrofit2.0"
+title: "结合Retrofit2.0体验OkHttp+RxJava"
 categories: [tech]
-date: 2017-01-11
-tags: [Retrofit2.0]
+date: 2017-02-8
+tags: [OkHttp,RxJava]
 toc: true
-description: 官方标语：一个用于Android和Java平台的类型安全的网络框架。
+description: 本篇是结合Retrofit2.0来使用RxJava、OkHttp的一些姿势，关于RxJava的基础知识请先行补充。
 ---
 
 ### 放在前边
-> 注：本篇是对Retrofit2.0的全面体验，并未涉及RxJava、OkHttp。
+> 注：本篇是结合Retrofit2.0来使用RxJava、OkHttp的一些姿势，关于RxJava的基础知识请先行补充。
 
 [demo.retrofit传送门](https://github.com/drawf/demo.retrofit)
 
-![](http://7sbl4z.com1.z0.glb.clouddn.com/demo.retrofit/blog/master/images/screenshot_1.png?imageMogr2/thumbnail/250x)
+![](http://7sbl4z.com1.z0.glb.clouddn.com/demo.retrofit/blog/master/images/screenshot_2.png?imageMogr2/thumbnail/250x)
 
-### Retrofit2.0
+### OkHttp相关
+
+#### 自定义LoggingInterceptor
 Slogan:A type-safe HTTP client for Android and Java.
 
 Retrofit is a type-safe REST client for Android built by Square. The library provides a powerful framework for authenticating and interacting with APIs and sending network requests with OkHttp.
