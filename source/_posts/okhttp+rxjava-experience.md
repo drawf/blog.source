@@ -282,6 +282,64 @@ private static File getEFDDir(String name) {
 }
 ```
 
+### RxJava相关
+
+#### Retrofit2.0+RxJava的基本使用
+
+```Java
+/*gradle 加上这两个依赖*/
+compile 'com.squareup.retrofit2:adapter-rxjava:2.1.0'
+compile 'io.reactivex:rxandroid:1.2.1'
+
+/*构建Retrofit时加上RxJavaCallAdapterFactory*/
+new Retrofit.Builder().addCallAdapterFactory(RxJavaCallAdapterFactory.create())
+
+/*定义API时候就可以返回Observable类型了*/
+@GET("top250")
+Observable<JsonObject> testRxJava(@Query("start") int start, @Query("count") int count);
+
+/*一次基本的请求过程*/
+private void testRxJava() {
+    Observable<JsonObject> observable = mMovieService.testRxJava(0, 2);
+    observable
+            //指定subscribe()所发生的线程，即Observable.OnSubscribe被激活时所处的线程，或者叫事件产生的线程。
+            .subscribeOn(Schedulers.io())
+            //指定Subscriber所运行在的线程，或者叫事件消费的线程。
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(new Subscriber<JsonObject>() {
+                @Override
+                public void onStart() {//事件还未发送之前被调用，做一些准备工作
+                    super.onStart();
+                    LogUtils.i("Test RxJava:RxJava Request onStart");
+                }
+
+                @Override
+                public void onCompleted() {//事件队列完结
+                    LogUtils.i("Test RxJava:RxJava Request onCompleted");
+                }
+
+                @Override
+                public void onError(Throwable e) {//事件队列异常
+                    LogUtils.e(e);
+                }
+
+                @Override
+                public void onNext(JsonObject jsonObject) {//处理返回数据
+                    LogUtils.i("Test RxJava:" + jsonObject.toString());
+                }
+            });
+}
+```
+
+#### RxJava的Schedulers
+
+
+
+
+
+
+
+
 
 
 
