@@ -17,7 +17,7 @@ description: 本篇是结合Retrofit2.0来使用RxJava、OkHttp的一些姿势�
 
 ### OkHttp相关
 
-#### Interceptors概念
+#### Interceptors概述
 
 Interceptors are a powerful mechanism that can monitor, rewrite, and retry calls.
 
@@ -187,10 +187,100 @@ OkHttp的缓存设计和浏览器的一样，缓存是自动完成的，完全�
     If-None-Match:"5694c7ef-24dc"
     ```
 
+#### 一点Android存储访问目录知识
 
+1. **应用数据目录（$appDataDir）**
 
+    内部存储：$appDataDir = $rootDir/data/$packageName
 
+    外部存储：$appDataDir = $rootDir/Android/data/$packageName
 
+    app卸载之后，这两个目录下的数据会被系统删除，我们应将应用的数据放在这两个目录下。
+
+    ```Java
+    /*使用 外部存储 需要的权限，从API 19/Andorid 4.4/KITKAT开始，不再需要显式声明这两个权限，除非要读写其他应用的应用数据($appDataDir)*/
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    ```
+
+2. **应用数据目录下的-*缓存目录***
+
+    内部存储：Context.getCacheDir()，机身内存不足时，文件就会被删除。
+
+    外部存储：Context.getExternalCacheDir()，外部存储没有实时监控，空间不足时，文件不会被实时删除，可能返回空对象。
+
+    ```Java
+    Context.getCacheDir()
+    /data/data/tv.wanzi.demo.retrofit/cache
+
+    Context.getExternalCacheDir():
+    /storage/sdcard0/Android/data/tv.wanzi.demo.retrofit/cache
+    ```
+
+3. **应用数据目录下的-*文件目录***
+
+    内部存储：Context.getFilesDir()，Context.getFileStreamPath(String name) 返回以 name 为文件名的文件对象，name 为空时返回 $filesDir 本身。
+
+    ```Java
+    Context.getFilesDir()
+    /data/data/tv.wanzi.demo.retrofit/files
+
+    Context.getFileStreamPath("")
+    /data/data/tv.wanzi.demo.retrofit/files
+
+    Context.getFileStreamPath("file1"):
+    /data/data/tv.wanzi.demo.retrofit/files/file1
+    ```
+
+    外部存储：Context.getExternalFilesDir(String type)，type 为空时返回 $filesDir 本身。
+
+    ```Java
+    /*type 系统指定了几种*/
+    Environment.DIRECTORY_MUSIC
+    Environment.DIRECTORY_PICTURES
+    Environment.DIRECTORY_MOVIES
+    Environment.DIRECTORY_DOWNLOADS
+    ...
+
+    Context.getExternalFilesDir()
+    /storage/sdcard0/Android/data/tv.wanzi.demo.retrofit/files
+
+    Context.getExternalFilesDir(Environment.DIRECTORY_MUSIC)
+    /storage/sdcard0/Android/data/tv.wanzi.demo.retrofit/files/Music
+
+    Context.getExternalFilesDir("responses")
+    /storage/sdcard0/Android/data/tv.wanzi.demo.retrofit/files/responses
+    ```
+
+4. **$cacheDir/$filesDir的安全性**
+
+    内部存储：$cacheDir，$filesDir是app安全的，其他应用无法读取本应用的数据。
+
+    外部存储：这两个文件夹其他应用程序也可访问，$filesDir中的媒体文件，不会被当做媒体扫描出来，加到媒体库中。
+
+#### 使用OkHttp的缓存功能
+
+```Java
+OkHttpClient client = new OkHttpClient.Builder()
+/*配置好缓存即可使用缓存功能*/
+.cache(FileUtils.getOkHttpCache())
+.build();
+
+public static Cache getOkHttpCache() {
+    File responses = getEFDDir("responses");
+    if (responses == null) return null;
+    /*配置缓存目录及缓存大小*/
+    return new Cache(responses, HTTP_RESPONSE_DISK_CACHE_MAX_SIZE);//10 * 1024 * 1024=10M
+}
+
+/*获取外部存储目录*/
+private static File getEFDDir(String name) {
+    if (!hasSDCardMounted()) return null;
+
+    Context context = MainApplication.getContext();
+    return context.getExternalFilesDir(name);
+}
+```
 
 
 
