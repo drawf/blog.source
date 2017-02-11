@@ -3,7 +3,7 @@ layout: post
 title: "结合Retrofit2.0体验OkHttp+RxJava"
 categories: [tech]
 date: 2017-02-8
-tags: [OkHttp,RxJava]
+tags: [Retrofit2.0,OkHttp,RxJava]
 toc: true
 description: 本篇是结合Retrofit2.0来使用RxJava、OkHttp的一些姿势，关于RxJava的基础知识请先行补充。
 ---
@@ -25,8 +25,8 @@ Interceptors are a powerful mechanism that can monitor, rewrite, and retry calls
 
 拦截器分两种：
 
-1. Application Interceptors 应用拦截器，通过`OkHttpClient.Builder()`调用`addInterceptor()`方法来注册。
-2. NetWork Interceptors 网络拦截器，通过`OkHttpClient.Builder()`调用`addNetWorkInterceptor()`方法来注册。
+1. Application Interceptors 应用拦截器，通过 OkHttpClient.Builder() 调用 addInterceptor() 方法来注册。
+2. NetWork Interceptors 网络拦截器，通过 OkHttpClient.Builder() 调用 addNetWorkInterceptor() 方法来注册。
 
 通过一张图看一下二者的区别：
 
@@ -333,18 +333,120 @@ private void testRxJava() {
 
 #### RxJava的Schedulers
 
+```Java
+/*在main线程中测试一下*/
+private void testRxJavaScheduler() {
+    Observable<JsonObject> observable = mMovieService.testRxJava(0, 2);
+    observable
+            /*同Subscriber.onStart()一样是在 subscribe() 调用后而且在事件发送前执行，区别在于它可以指定线程*/
+            /*默认情况下，doOnSubscribe() 执行在 subscribe() 发生的线程；而如果在 doOnSubscribe() 之后有 subscribeOn() 的话，它将执行在离它最近的 subscribeOn() 所指定的线程。*/
+            .doOnSubscribe(new Action0() {
+                @Override
+                public void call() {
+                    LogUtils.i("Test RxJava Scheduler: doOnSubscribe thread name -> " + Thread.currentThread().getName());
+                }
+            })
+            .subscribeOn(Schedulers.io())//指定subscribe()所发生的线程，即Observable.OnSubscribe被激活时所处的线程，或者叫事件产生的线程。
+            .observeOn(AndroidSchedulers.mainThread())//指定Subscriber所运行在的线程，或者叫事件消费的线程。
+            .subscribe(new Subscriber<JsonObject>() {
+                @Override
+                public void onStart() {//这里onStart()总是在执行subscribe()方法的线程中执行，不能单独指定线程
+                    super.onStart();
+                    LogUtils.i("Test RxJava Scheduler: onStart thread name -> " + Thread.currentThread().getName());
+                }
 
+                @Override
+                public void onCompleted() {
+                    LogUtils.i("Test RxJava Scheduler: onCompleted thread name -> " + Thread.currentThread().getName());
+                }
 
+                @Override
+                public void onError(Throwable e) {
+                    LogUtils.e(e);
+                }
 
+                @Override
+                public void onNext(JsonObject jsonObject) {
+                    LogUtils.i("Test RxJava Scheduler:" + jsonObject.toString());
+                }
+            });
 
+}
 
+/*在新线程中测试一下*/
+private void testRxJavaSchedulerInNewThread() {
+    new Thread() {
+        @Override
+        public void run() {
+            super.run();
+            LogUtils.i("Test RxJava Scheduler: request thread name -> " + Thread.currentThread().getName());
+            //将请求代码发到这里，onStart 执行所在线程就不是主线程了，因为onStart()总是在执行subscribe()方法的线程中执行，不能单独指定线程
+            testRxJavaScheduler();
+        }
+    }.start();
+}
+```
 
+#### RxJava的Zip函数
 
+```Java
+/*新增一条返回JsonArray的API，以示区别*/
+@GET
+Observable<JsonArray> testRxJava1(@Url String url, @Query("start") int start, @Query("count") int count);
 
+private void testRxJavaZip() {
+    Observable<JsonObject> observable = mMovieService.testRxJava(0, 2);
+    Observable<JsonArray> observable1 = mMovieService.testRxJava1("https://movie.douban.com/j/cinemas/?city_id=108288&limit=5", 0, 2);
 
+    //zip方法把多个Observable组合成新的Observable，新的Observable对应的数据由call方法决定，它可以对数据源做二次操作
+    //zip还有接受更多参数的重载方法
+    Observable.zip(observable, observable1, new Func2<JsonObject, JsonArray, JsonArray>() {
+        @Override
+        public JsonArray call(JsonObject jsonObject, JsonArray jsonElements) {
+            JsonArray array = new JsonArray();
+            array.add(jsonObject);
+            array.add("=================");
+            array.add(jsonElements);
+            return array;
+        }
+    })
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(new Action1<JsonArray>() {
+                @Override
+                public void call(JsonArray jsonElements) {
+                    LogUtils.i("Test RxJava zip:" + jsonElements.toString());
+                }
+            });
 
+}
+```
 
+#### RxJava的Merge函数
 
+```Java
+private void testRxJavaMerge() {
+    Observable<JsonObject> observable = mMovieService.testRxJava(0, 2);
+    Observable<JsonArray> observable1 = mMovieService.testRxJava1("https://movie.douban.com/j/cinemas/?city_id=108288&limit=5", 0, 2);
+
+    //merge方法可以合并多个数据源，但数据会被依次发射出来
+    Observable.merge(observable, observable1)
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(new Action1<Object>() {
+                @Override
+                public void call(Object object) {
+                    if (object instanceof JsonObject) {
+                        LogUtils.i("Test RxJava Merge:observable result -> " + object.toString());
+                    } else if (object instanceof JsonArray) {
+                        LogUtils.i("Test RxJava Merge:observable1 result -> " + object.toString());
+                    } else {
+                        LogUtils.e(new RuntimeException("数据异常"));
+                    }
+                }
+            });
+}
+```
 
 ### 放在后边
-关于Retrofit2.0的姿势就写到这里了，如有疑问和建议欢迎留言。
+如有疑问和建议欢迎留言。
