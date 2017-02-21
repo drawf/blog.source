@@ -1,16 +1,16 @@
 ---
 layout: post
-title: "C语言基础知识记录"
+title: "C语言基础知识补习①"
 categories: [tech]
 date: 2017-02-18
 tags: [C语言]
 toc: true
-description: 本篇是C语言的基础知识补习，需要读者有一定的编程经验。
+description: 本篇是C语言的基础知识补习第一篇，共两篇，需要读者有一定的编程经验。
 ---
 
 ### 放在前边
 
-> 注：本篇是C语言的基础知识补习，需要读者有一定的编程经验。
+> 注：本篇是C语言的基础知识补习第一篇，共两篇，需要读者有一定的编程经验。
 
 [demo.c传送门](https://github.com/drawf/demo.retrofit)
 
@@ -264,6 +264,129 @@ void testSecondaryPointer() {
     //用二级指针修改 i 的值：20
 
 }
+```
+
+#### 函数指针的概念
+
+我们定义的函数跟变量一样，会有一个内存地址，我们可以把这个地址赋值给*函数指针*，这样通过函数指针就可以调用相应的函数。
+
+```C
+void logcat() {
+    printf("随便打印一下..\n");
+}
+
+void testFuncPointer() {
+    //函数指针定义：返回值类型 (函数指针)(函数参数) = 函数地址
+    void (*pFunc)() = &logcat;
+
+    pFunc();
+    printf("函数的地址：%#x\n", logcat);
+    printf("函数的地址：%#x\n", &logcat);
+    printf("函数指针的值：%#x\n", pFunc);
+    printf("函数指针的地址：%#x\n", &pFunc);
+    //函数的地址：0xd5754c0
+    //函数的地址：0xd5754c0
+    //函数指针的值：0xd5754c0
+    //函数指针的地址：0x5268b8f8
+}
+```
+
+有了函数指针我们就可以将函数当作参数传入到其他函数中，这样就实现了其他高级语言里的*闭包*，看例子。
+
+```Java
+int add(int num1, int num2) {
+    return num1 + num2;
+}
+
+int minus(int num1, int num2) {
+    return num1 - num2;
+}
+
+/*接收 一个返回值为int类型，输入两个int类型参数的函数指针 和 两个int类型参数*/
+void calculate(int(*pFunc)(int, int), int num1, int num2) {
+    int i = pFunc(num1, num2);
+    printf("计算完成：%d\n", i);
+}
+
+void testFuncPointer1() {
+
+    calculate(&add, 2, 3);
+    //计算完成：5
+    calculate(&minus, 2, 3);
+    //计算完成：-1
+
+}
+```
+```Java
+/*通过函数指针实现方法回调*/
+void callback(char *msg) {
+    printf("网络请求回调：%s\n", msg);
+}
+
+void requestNet(char *url, void(*pCallBack)(char *)) {
+    printf("请求url：%s\n", url);
+    sleep(2);//模拟网络耗时
+    char *msg = "我是返回的数据";
+    pCallBack(msg);
+
+    //请求url：www.baidu.com
+    //网络请求回调：我是返回的数据
+}
+
+void testFuncPointer2() {
+    char *url = "www.baidu.com";
+    requestNet(url, &callback);
+}
+```
+
+#### 字符操作
+
+```Java
+/*字符数组*/
+void testCharArray() {
+
+    char arr[15] = {'a', 'b', ' ', 'd', 'e'};
+    printf("字符数组：%s\n", arr);//用 %s 占位符可将字符数组作为字符串打印出来
+    //字符数组：ab de
+
+    arr[1] = 'Y';//修改第二个元素
+    printf("修改了第二个字符：%s\n", arr);
+    //修改了第二个字符：aY de
+
+}
+```
+
+```Java
+/*字符指针*/
+void testCharPointer() {
+
+    char *s = "Hello World!";//是一段连续的内存地址，不可修改
+    printf("字符指针内存地址：%#x\n", s);//返回的是首个字符 H 的内存地址
+    printf("打印字符串：%s\n", s);
+    //字符指针内存地址：0x7ce4c63
+    //打印字符串：Hello World!
+
+    char *t = s + 4;//这样 t 就指向了首个 o 字符
+    printf("o 字符的地址：%#x\n", t);
+    //o 字符的地址：0x7ce4c67
+
+    //截取字符串 llo World!
+    s += 2;//s 指向了首个 l 字符
+    while (*s) {
+        printf("%c", *s);
+        s++;
+    }
+    //llo World!
+
+}
+```
+
+> 注：1，字符指针与字符数组最大的区别在于，字符指针不可修改内容，字符数组可以修改。2，输出格式占位符 %s 是把对应的参数*作为内存地址*，然后将地址指向的字符输出，并依次将该地址递增输出字符，直到遇到空字符时认为字符串结束。
+
+接着再看几个字符操作的例子。
+
+```Java
+
 ```
 
 ### 放在后边
