@@ -5,14 +5,14 @@ categories: [tech]
 date: 2017-02-18
 tags: [C语言]
 toc: true
-description: 本篇是C语言的基础知识补习第一篇，共两篇，需要读者有一定的编程经验。
+description: 本篇是C语言的基础知识补习的第一篇，共两篇，需要读者有一定的编程经验。
 ---
 
 ### 放在前边
 
-> 注：本篇是C语言的基础知识补习第一篇，共两篇，需要读者有一定的编程经验。
+> 注：本篇是C语言的基础知识补习的第一篇，共两篇，需要读者有一定的编程经验。
 
-[demo.c传送门](https://github.com/drawf/demo.retrofit)
+[demo.c传送门](https://github.com/drawf/demo.c)
 
 ### C/C++的开发工具
 
@@ -386,7 +386,76 @@ void testCharPointer() {
 接着再看几个字符操作的例子。
 
 ```Java
+/*拼接字符串*/
+void testSpliceString() {
 
+    //用来存储合并字符串的容器
+    char arr[50] = {'=', '='};
+
+    char *c1 = "abcd";
+    char *c2 = "efg";
+
+    strcat(arr, c1);//将 c1 拼接到 arr ，不会清除原来的数据
+    strcat(arr, c2);
+    printf("拼接结果：%s\n", arr);
+    //拼接结果：==abcdefg
+
+    strcpy(arr, c1);//strcpy，将 c1 拼接到 arr ，会清除原来的数据
+    strcat(arr, c2);
+    printf("拼接结果：%s\n", arr);
+    //拼接结果：abcdefg
+
+}
+```
+
+```Java
+/*查找单个字符*/
+void testQueryChar() {
+
+    char *s = "abcdefg hijklmn;";
+    char *p = strchr(s, 'g');//查找某个字符，返回该字符的指针
+    printf("截取 g 字符往后的字符串：%s\n", p);
+    //截取 g 字符往后的字符串：g hijklmn;
+
+    if (p) {//p 存储的是 g 字符的内存地址
+        printf("g 字符索引位置：%d\n", p - s);
+        //g 字符索引位置：6
+
+        printf("截取 g 字符往后的字符串：");
+        while (*p) {//用指针递增的方法打印 g 字符往后的字符串
+            printf("%c", *p);
+            p++;
+        }
+        //截取 g 字符往后的字符串：g hijklmn;
+
+    } else {
+        printf("没有找到 g 字符\n");
+    }
+}
+```
+
+```Java
+/*查找字符串*/
+void testQueryString() {
+
+    char *s = "这是一个中abcdefg hijk文字符串！";
+    char *k = "abc";
+
+    char *p = strstr(s, k);//查找某个字符串，返回该字符串的指针（其实是该字符串的首字符 a 的指针）
+    printf("截取 abc 字符串往后的字符串：%s\n", p);
+    //截取 abc 字符串往后的字符串：abcdefg hijk文字符串！
+
+    if (p) {
+        printf("abc 字符串索引位置：%d\n", p - s);
+        //abc 字符串索引位置：15
+
+        printf("打印 b 字符：%c\n", *++p);//p+1就得到了 b 的内存地址
+        //打印 b 字符：b
+
+    } else {
+        printf("没有找到 abc 字符串\n");
+    }
+}
 ```
 
 ### 放在后边
