@@ -157,5 +157,190 @@ C语言中文件操作主要依靠*操作模式*来辨别是输入流还是输�
 
 > 注：上述操作模式是针对文本文件的，如果要操作二进制文件，则需要在上述操作符后面加上 b，如rb、wb、ab等。
 
+```Java
+void testWriteTextFile() {
+
+    char *path = "/Users/drawf/Desktop/test.txt";
+    char *content = "我是测试内容！";
+
+    FILE *pFILE = fopen(path, "w");
+    if (pFILE == NULL) {
+        printf("打开文件失败\n");
+        return;
+    }
+
+    fputs(content, pFILE);//写入文件
+    fclose(pFILE);//关闭流
+    printf("写入文件测试成功！\n");
+    //写入文件测试成功！
+}
+
+void testReadTextFile() {
+
+    char *path = "/Users/drawf/Desktop/test.txt";
+
+    FILE *pFILE = fopen(path, "r");
+    if (pFILE == NULL) {
+        printf("打开文件失败");
+        return;
+    }
+
+    char buffer[1024];//字符缓存区
+    while (fgets(buffer, 1024, pFILE)) {
+        printf("%s\n", buffer);
+    }
+
+    fclose(pFILE);
+    printf("读取文件测试成功！\n");
+    //我是测试内容，i am test content!
+    //读取文件测试成功！
+}
+
+void testBinaryFile() {
+
+    char *currFile = "/Users/drawf/Desktop/test.txt";
+    char *destFile = "/Users/drawf/Desktop/test_copy.txt";
+
+    FILE *pCurrFile = fopen(currFile, "rb");
+    FILE *pDestFile = fopen(destFile, "wb");
+
+    int buffer[1024];
+    int len;
+
+    while ((len = fread(buffer, sizeof(int), 1024, pCurrFile)) != 0) {
+        fwrite(buffer, sizeof(int), len, pDestFile);
+    }
+
+    fclose(pCurrFile);
+    fclose(pDestFile);
+    printf("拷贝文件成功！");
+    //拷贝文件成功！
+}
+```
+
+#### 文件的加解密
+
+文本、图片、视频等文件，都是以*二进制*存储在磁盘上，所以对文件内容进行二进制运算即可达到加密目的。
+
+`^`异或运算规则：相同得0，不同得1，异或两次得到本身
+
+```Java
+0 ^ 0 = 0
+0 ^ 1 = 1
+1 ^ 0 = 1
+1 ^ 1 = 0
+
+4的二进制是：0100
+5的二进制是：0101
+异或运算结果（加密）：4 ^ 5 = 0001
+异或运算结果（解密）：0001 ^ 0101 == 0100
+由上述可见，^ 一次为加密，再 ^ 一次就是解密
+
+```
+
+```Java
+void testEncryptFile() {
+
+    char *currFile = "/Users/drawf/Desktop/test.txt";
+    char *encryptedFile = "/Users/drawf/Desktop/test_encrypted.txt";
+
+    FILE *pCurrFile = fopen(currFile, "rb");
+    FILE *pEncryptedFile = fopen(encryptedFile, "wb");
+
+    int buffer;
+    while ((buffer = fgetc(pCurrFile)) != EOF) {
+        fputc(buffer ^ 8, pEncryptedFile);
+    }
+
+    fclose(pEncryptedFile);
+    fclose(pCurrFile);
+    printf("文件加密成功！");
+    //文件加密成功！
+}
+
+void testDecryptFile() {
+
+    char *encryptedFile = "/Users/drawf/Desktop/test_encrypted.txt";
+    char *decryptedFile = "/Users/drawf/Desktop/test_decrypted.txt";
+
+    FILE *pEncryptedFile = fopen(encryptedFile, "rb");
+    FILE *pDecryptedFile = fopen(decryptedFile, "wb");
+
+    int buffer;
+    while ((buffer = fgetc(pEncryptedFile)) != EOF) {
+        fputc(buffer ^ 8, pDecryptedFile);
+    }
+
+    fclose(pDecryptedFile);
+    fclose(pEncryptedFile);
+    printf("文件解密成功！");
+    //文件解密成功！
+}
+```
+
+#### 获取文件大小
+
+```Java
+void testGetFileSize() {
+
+    char *currFile = "/Users/drawf/Desktop/test.txt";
+    FILE *pFILE = fopen(currFile, "r");
+
+    //重新定位文件指针，0是文件指针的偏移量，SEEK_END文件末尾
+    fseek(pFILE, 0l, SEEK_END);
+    //返回当前的文件指针，相对于文件开头的位移量
+    long size = ftell(pFILE);
+    fclose(pFILE);
+
+    printf("文件大小：%ld bytes\n", size);
+    //文件大小：21 bytes
+}
+```
+
+#### 预编译
+
+预编译（预处理，宏定义，宏替换）这种叫法，关键字`#define`，其本质是替换文本。
+
+预编译，主要在编译时期完成文本替换工作，常见的预编译指令有：#include、#ifndef、#endif、#define、#error等等。
+
+C语言的执行过程：
+
+1. 编译 ==> 生成目标代码（.obj）
+2. 链接 ==> 将目标代码与C函数库合并，生成最终的可执行文件
+3. 执行
+
+```C
+//预定义一个常量，宏常量没有类型，只做替换
+#define MAX 100
+#define NAME "bob"
+
+void testDefineConstant() {
+    int i = 99;
+    if (i < MAX) {
+        printf("结果：i<Max\n");
+    }
+
+    printf("结果：%s\n", NAME);
+    //结果：i<Max
+    //结果：bob
+}
+
+//预定义宏函数，来简化很长的函数名称
+#define jni(NAME) _jni_define_func_##NAME()//用 NAME 来替换 ##NAME
+
+void _jni_define_func_write() {
+    printf("write\n");
+}
+
+void _jni_define_func_read() {
+    printf("read\n");
+}
+
+void testDefineFunc() {
+    jni(write);
+    jni(read);
+}
+```
+
 ### 放在后边
 如有疑问和建议欢迎留言。
